@@ -1,7 +1,7 @@
 /* eslint-disable import/no-default-export */
 /* eslint-disable import/no-extraneous-dependencies */
 import { dirname, join as joinPath, relative as relativePath, resolve as resolvePath } from 'path';
-import cosmiconfig from 'cosmiconfig';
+import { cosmiconfig, defaultLoaders } from 'cosmiconfig';
 import * as GraphQL from 'graphql';
 import ts from 'typescript';
 import { resolve, ImportNode } from './resolve';
@@ -11,18 +11,20 @@ const GENERATED = './__generated__/';
 const configExplorer = cosmiconfig('relay', {
     searchPlaces: ['relay.config.js', 'relay.config.json', 'package.json'],
     loaders: {
-        '.json': cosmiconfig.loadJson,
-        '.js': cosmiconfig.loadJs,
-        noExt: cosmiconfig.loadYaml,
+        '.json': defaultLoaders['.json'],
+        '.js': defaultLoaders['.js'],
+        noExt: defaultLoaders['.yml'],
     },
 });
 
 let RelayConfig;
-const result = configExplorer.searchSync();
-if (result) {
-    RelayConfig = result.config;
-}
+configExplorer.search().then((result) => {
+    if (result) {
+        RelayConfig = result.config;
+    }
+});
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const relayTransform = <T extends ts.Node>(
     context: ts.TransformationContext,
 ): ((rootNode: ts.SourceFile) => ts.SourceFile) => {
